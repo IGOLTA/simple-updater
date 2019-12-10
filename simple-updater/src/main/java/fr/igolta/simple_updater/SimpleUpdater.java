@@ -33,7 +33,7 @@ public class SimpleUpdater {
 	private HashMap<String, String> serverFiles;
 	private HashMap<File, String> downloadUrls;
 	
-	public SimpleUpdater(URI uri, File destination) throws IOException, InterruptedException, IllegalArgumentException {
+	private SimpleUpdater(URI uri, File destination) throws IOException, InterruptedException, IllegalArgumentException {
 		if(destination.isDirectory()) {
 			this.destination = destination;
 			
