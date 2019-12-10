@@ -1,11 +1,18 @@
 package fr.igolta.simple_updater;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,17 +20,113 @@ import org.json.simple.parser.ParseException;
 
 public class SimpleUpdater {
 	
+	public static final String rootFileName = "files";
 	public static final HttpClient httpClient = HttpClient.newBuilder()
 			.version(HttpClient.Version.HTTP_2)
 			.build();
 	
-	private JSONObject files;
+	private File destination;
+	private JSONObject jsonData;
+	private long totalFiles;
+	private long filesToDownload;
+	private HashMap<File, String> localFiles;
+	private HashMap<String, String> serverFiles;
+	private HashMap<File, String> downloadUrls;
 	
-	public SimpleUpdater(URI uri, File destination) throws IllegalArgumentException, ParseException, IOException, InterruptedException {
+	public SimpleUpdater(URI uri, File destination) throws IOException, InterruptedException, IllegalArgumentException {
 		if(destination.isDirectory()) {
-			files = (JSONObject) new JSONParser().parse(download(uri));
+			this.destination = destination;
+			
+			try {
+				jsonData = (JSONObject) new JSONParser().parse(download(uri));
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			
+			totalFiles = (Long) jsonData.get("filesNumber");
+			
+			serverFiles = (HashMap<String, String>) jsonData.get("checksums");
+			
 		}else {
 			throw new IllegalArgumentException("Destionation must be a directory");
+		}
+	}
+
+	
+	public static HashMap<File, String> listAndCheckFiles(File dir) throws IllegalArgumentException, IOException {
+		if(dir.isDirectory()) {
+			HashMap<File, String> files = new HashMap<File, String>();
+			
+			for(File file:listFiles(dir)) {
+				files.put(file, generateChecksumFor(file));
+			}
+			
+			return files;
+		}else {
+			throw new IllegalArgumentException("Folder must be a directory");
+		}
+	}
+	
+	public static String generateChecksumFor(File file) throws IllegalArgumentException, IOException {
+		if(file.isFile()) {
+			MessageDigest digest;
+			try {
+				digest = MessageDigest.getInstance("MD5");
+				FileInputStream fis = new FileInputStream(file);
+				byte[] byteArray = new byte[1024];
+			    int bytesCount = 0; 
+			    
+			    while ((bytesCount = fis.read(byteArray)) != -1) {
+			        digest.update(byteArray, 0, bytesCount);
+			    };
+			    
+			    fis.close();
+			    
+			    byte[] bytes = digest.digest();
+			    
+			    StringBuilder sb = new StringBuilder();
+			    for(int i=0; i< bytes.length ;i++)
+			    {
+			        sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+			    }
+			    
+			    return sb.toString();
+			} catch (NoSuchAlgorithmException e) {
+				return "";
+			}
+		}else {
+			throw new IllegalArgumentException("File must be a file");
+		}
+	}
+	
+	public static ArrayList<File> listFiles(File dir) throws IOException {
+		if(dir.isDirectory()) {
+			ArrayList<File> subdirs  = new ArrayList<File>();
+			ArrayList<File> files = new ArrayList<File>();
+			
+			for(File file:dir.listFiles()) {
+				if(file.isFile()) {
+					files.add(file);
+				}else if(file.isDirectory()) {
+					subdirs.add(file);
+				}
+			}
+			
+			while(subdirs.size() > 0) {
+				for(File file: subdirs.get(0).listFiles()) {
+					if(file.isFile()) {
+						files.add(file);
+					}else if(file.isDirectory()) {
+						subdirs.add(file);
+					}
+				}
+				
+				subdirs.remove(0);
+			}
+			
+			return files;
+		}else {
+			throw new IllegalArgumentException("Folder must be a directory");
 		}
 	}
 	
