@@ -30,10 +30,10 @@ Simple-updater is a java library for updating and downloading files the easiest 
   ```
   HashMap<File, String> listAndCheckFiles(File dir) throws IllegalArgumentException, IOException 
   ```
-- Use this method to check if an Map entry <File, Checksum> is contained in an other HashMap<File, Checksum>
+- Use this method to check if a Map entry <File, Checksum> is contained in another HashMap<File, Checksum>
   ```
   boolean containsFileSame(Map.Entry<File, String> entry, HashMap<File, String> ref)
   ```
 ### Simple-updater's class
 
-You can use this class to update a folder. Use ``` new SimpleUpdater(URI simpleUpdaterServerURI, File folderToUpdate) ``` to update a folder. You can download simple-updater Server [here](https://github.com/IGOLTA/simple-updater-Server). Constructor of SimpleUpdater class throws IOException, InterruptedException and IllegalArgumentException.
+You can use this class to update a folder. Use ``` new SimpleUpdater(URI simpleUpdaterServerURI, File folderToUpdate) ``` to update a folder. You can download simple-updater Server [here](https://github.com/IGOLTA/simple-updater-Server). The constructor of SimpleUpdater class throws IOException, InterruptedException and IllegalArgumentException.
