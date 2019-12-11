@@ -2,11 +2,17 @@ package fr.igolta.simple_updater;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -25,17 +31,21 @@ public class SimpleUpdater {
 			.version(HttpClient.Version.HTTP_2)
 			.build();
 	
+	private URI serverURI;
 	private File destination;
 	private JSONObject jsonData;
-	private long totalFiles;
-	private long filesToDownload;
 	private HashMap<File, String> localFiles;
-	private HashMap<String, String> serverFiles;
-	private HashMap<File, String> downloadUrls;
+	private HashMap<File, String> serverFiles = new HashMap<File, String>();
+	private ArrayList<File> filesToDelete = new ArrayList<File>();;
+	private ArrayList<File> filesToDownload = new ArrayList<File>();;
 	
-	private SimpleUpdater(URI uri, File destination) throws IOException, InterruptedException, IllegalArgumentException {
+	@SuppressWarnings("unchecked")
+	public SimpleUpdater(URI uri, File destination) throws IOException, InterruptedException, IllegalArgumentException {
 		if(destination.isDirectory()) {
 			this.destination = destination;
+			this.serverURI = uri;
+			
+			log("Downloading checksums and paths...");
 			
 			try {
 				jsonData = (JSONObject) new JSONParser().parse(download(uri));
@@ -43,16 +53,87 @@ public class SimpleUpdater {
 				e.printStackTrace();
 			}
 			
-			totalFiles = (Long) jsonData.get("filesNumber");
+			localFiles = listAndCheckFiles(destination);
 			
-			serverFiles = (HashMap<String, String>) jsonData.get("checksums");
+			for(Entry<String, String> entry:((HashMap<String, String>) jsonData.get("checksums")).entrySet()) {
+				String finalPath = entry.getKey();
+				
+				finalPath = finalPath.replaceFirst(rootFileName, destination.getAbsolutePath().replace("\\", "\\\\"));
+				
+				serverFiles.put(new File(finalPath), entry.getValue());
+			}
 			
+			log("Listing files...");
+			
+			for(Entry<File, String> entry:localFiles.entrySet()) {
+				if(!containsFileSame(entry, serverFiles)) {
+					filesToDelete.add(entry.getKey());
+				}
+			}
+			
+			for(Entry<File, String> entry:serverFiles.entrySet()) {
+				if(!containsFileSame(entry, localFiles)) {
+					filesToDownload.add(entry.getKey());
+				}
+			}
+			
+			if(filesToDelete.size() > 0) {
+				log("Deleting files ...");
+				for(File f:filesToDelete) {
+					log("Deleting " + f.getAbsolutePath());
+					
+					f.delete();
+				}
+			}else {
+				log("Nothing to delete");
+			}
+			
+			if(filesToDownload.size() > 0) {
+				log("Downloading files ...");
+				for(File f:filesToDownload) {
+					
+					f.getParentFile().mkdirs();
+					f.createNewFile();
+					
+					log("Downloading " + getServerPath(f) + " at " + f.getAbsolutePath() + "...");
+					
+					FileWriter fw = new FileWriter(f);
+					fw.write(download(getServerPath(f)));
+					fw.close();	
+				}
+			}else {
+				log("Nothing to download");
+			}
 		}else {
 			throw new IllegalArgumentException("Destionation must be a directory");
 		}
 	}
-
 	
+	private URI getServerPath(File f) {
+		String serverPath = destination.toURI().relativize(f.toURI()).getPath();;
+		
+		serverPath = rootFileName + "/" + serverPath;
+		
+		return URI.create(serverURI.toASCIIString() + serverPath.replace(" ", "%20"));
+	}
+	
+	private static void log(String m) {
+		System.out.println("[simple-updater] " + m);
+	}
+	
+	private static boolean containsFileSame(Map.Entry<File, String> entry, HashMap<File, String> ref) {
+		
+		for(Entry<File, String> refEntry:ref.entrySet()) {
+			if(refEntry.getKey().getAbsolutePath().equals(entry.getKey().getAbsolutePath())) {
+				if(refEntry.getValue().equals(entry.getValue())) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+
 	public static HashMap<File, String> listAndCheckFiles(File dir) throws IllegalArgumentException, IOException {
 		if(dir.isDirectory()) {
 			HashMap<File, String> files = new HashMap<File, String>();
@@ -145,4 +226,12 @@ public class SimpleUpdater {
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		return response.body();
 	}
+
+    public static String encodeAsURI(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException(ex.getCause());
+        }
+    }
 }
