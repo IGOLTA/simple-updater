@@ -5,7 +5,7 @@ Simple-updater is a java library for updating and downloading files the easiest 
 ## Todo list
 
 - [x] Build basic static methods
-- [ ] Finalise updater class
+- [x] Finalise updater class
 ## How to use simple-updater
 ### Simple-updater's static methods
 
@@ -29,6 +29,10 @@ Simple-updater is a java library for updating and downloading files the easiest 
   returns HashMap<File in folder, MD5 checksum>.
   ```
   HashMap<File, String> listAndCheckFiles(File dir) throws IllegalArgumentException, IOException 
+  ```
+- Use this method to check if an Map entry <File, Checksum> is contained in an other HashMap<File, Checksum>
+  ```
+  boolean containsFileSame(Map.Entry<File, String> entry, HashMap<File, String> ref)
   ```
 ### Simple-updater's class
 
