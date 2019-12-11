@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"fr.igolta.simple_updater","l":"MainTest"},{"p":"fr.igolta.simple_updater","l":"SimpleUpdater"}]
