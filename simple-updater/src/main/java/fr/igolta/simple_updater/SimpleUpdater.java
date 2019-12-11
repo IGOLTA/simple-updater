@@ -226,12 +226,4 @@ public class SimpleUpdater {
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		return response.body();
 	}
-
-    public static String encodeAsURI(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException(ex.getCause());
-        }
-    }
 }
