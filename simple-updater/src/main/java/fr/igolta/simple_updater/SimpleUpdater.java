@@ -1,16 +1,24 @@
 package fr.igolta.simple_updater;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,7 +51,7 @@ public class SimpleUpdater {
 			log("Downloading checksums and paths...");
 			
 			try {
-				jsonData = (JSONObject) new JSONParser().parse(download(uri));
+				jsonData = (JSONObject) new JSONParser().parse(downloadWithReq(uri));
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
@@ -86,19 +94,17 @@ public class SimpleUpdater {
 			if(filesToDownload.size() > 0) {
 				log("Downloading files ...");
 				for(File f:filesToDownload) {
-					
 					f.getParentFile().mkdirs();
-					f.createNewFile();
 					
 					log("Downloading " + getServerPath(f) + " at " + f.getAbsolutePath() + "...");
 					
-					FileWriter fw = new FileWriter(f);
-					fw.write(download(getServerPath(f)));
-					fw.close();	
+					downloadToFile(getServerPath(f).toURL(), f);
 				}
 			}else {
 				log("Nothing to download");
 			}
+			
+			log("Update finished");
 		}else {
 			throw new IllegalArgumentException("Destionation must be a directory");
 		}
@@ -206,11 +212,11 @@ public class SimpleUpdater {
 		}
 	}
 	
-	public static String download(URI uri) throws IOException, InterruptedException {
-		return download(uri, "unknown");
+	public static String downloadWithReq(URI uri) throws IOException, InterruptedException {
+		return downloadWithReq(uri, "unknown");
 	}
 	
-	public static String download(URI uri, String dataType) throws IOException, InterruptedException {
+	public static String downloadWithReq(URI uri, String dataType) throws IOException, InterruptedException {
 		
 		HttpRequest request = HttpRequest.newBuilder()
     			.GET()
@@ -220,5 +226,30 @@ public class SimpleUpdater {
 		
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		return response.body();
+	}
+	
+	public static void downloadToFile(URL url, File file) throws IOException {
+		if(file.exists()) {
+			file.delete();
+		}
+		file.createNewFile();
+		
+	    OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+	    URLConnection conn = url.openConnection();
+	    String encoded = Base64.getEncoder().encodeToString(("username"+":"+"password").getBytes(StandardCharsets.UTF_8));
+	    conn.setRequestProperty("Authorization", "Basic "+ encoded);
+	    InputStream in = conn.getInputStream();
+	    byte[] buffer = new byte[1024];
+	
+	    int numRead;
+	    while ((numRead = in.read(buffer)) != -1) {
+	        out.write(buffer, 0, numRead);
+	    }
+	    if (in != null) {
+	        in.close();
+	    }
+	    if (out != null) {
+	        out.close();
+	    }
 	}
 }
