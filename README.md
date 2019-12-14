@@ -41,3 +41,9 @@ Simple-updater is a java library for updating and downloading files the easiest 
 ### Simple-updater's class
 
 You can use this class to update a folder. Use ``` new SimpleUpdater(URI simpleUpdaterServerURI, File folderToUpdate) ``` to update a folder. You can download simple-updater Server [here](https://github.com/IGOLTA/simple-updater-Server). The constructor of SimpleUpdater class throws IOException, InterruptedException and IllegalArgumentException.
+## Dependencies
+
+|Name|Version|
+|:-:|:-:|
+|Json-Simple|[1.1.1](https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple)|
+|Apache HttpClient|[4.5.10](https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient)|
