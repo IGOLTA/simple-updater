@@ -9,13 +9,13 @@ Simple-updater is a java library for updating and downloading files the easiest 
 ## How to use simple-updater
 ### Simple-updater's static methods
 
-- Use this method to download a file
+- Use this method to download text from web
   ```
-  File SimpleUpdater.download(URI uri)
+  File SimpleUpdater.downloadWithReq(URI uri)
   ```
-- Use this method to download a file and specify a data type
+- Use this method to text from web and specify a data type
   ```
-  File SimpleUpdater.download(URI uri, String data type)
+  File SimpleUpdater.downloadWithReq(URI uri, String data type)
   ```
 - Use this method to list recursively all files in a folder
   ```
@@ -33,6 +33,10 @@ Simple-updater is a java library for updating and downloading files the easiest 
 - Use this method to check if a Map entry <File, Checksum> is contained in another HashMap<File, Checksum>
   ```
   boolean containsFileSame(Map.Entry<File, String> entry, HashMap<File, String> ref)
+  ```
+- Use this method to download from an url to a file
+  ```
+  void downloadToFile(URL url, File file) throws IOException
   ```
 ### Simple-updater's class
 
