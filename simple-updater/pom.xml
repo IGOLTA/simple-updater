@@ -4,7 +4,7 @@
 
   <groupId>fr.igolta</groupId>
   <artifactId>simple-updater</artifactId>
-  <version>1.0.0</version>
+  <version>1.6.0</version>
   <packaging>jar</packaging>
 
   <name>simple-updater</name>
@@ -25,5 +25,10 @@
       <artifactId>commons-io</artifactId>
       <version>2.6</version>
     </dependency>
+	<dependency>
+		<groupId>org.apache.httpcomponents</groupId>
+		<artifactId>httpclient</artifactId>
+		<version>4.5.10</version>
+	</dependency>
   </dependencies>
 </project>

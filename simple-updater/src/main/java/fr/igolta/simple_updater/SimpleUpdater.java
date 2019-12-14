@@ -10,9 +10,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,16 +19,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 public class SimpleUpdater {
 	
 	public static final String rootFileName = "files";
-	public static final HttpClient httpClient = HttpClient.newBuilder()
-			.version(HttpClient.Version.HTTP_2)
-			.build();
+	
+	public static final HttpClient httpClient = HttpClients.createDefault();
 	
 	private URI serverURI;
 	private File destination;
@@ -50,8 +53,8 @@ public class SimpleUpdater {
 			log("Downloading checksums and paths...");
 			
 			try {
-				jsonData = (JSONObject) new JSONParser().parse(downloadWithReq(uri));
-			} catch (ParseException e) {
+				jsonData = (JSONObject) new JSONParser().parse(downloadWithReq(uri.toURL()));
+			} catch (org.json.simple.parser.ParseException e) {
 				e.printStackTrace();
 			}
 			
@@ -211,20 +214,18 @@ public class SimpleUpdater {
 		}
 	}
 	
-	public static String downloadWithReq(URI uri) throws IOException, InterruptedException {
+	public static String downloadWithReq(URL uri) throws IOException, InterruptedException {
 		return downloadWithReq(uri, "unknown");
 	}
 	
-	public static String downloadWithReq(URI uri, String dataType) throws IOException, InterruptedException {
+	public static String downloadWithReq(URL url, String dataType) throws IOException, InterruptedException {
 		
-		HttpRequest request = HttpRequest.newBuilder()
-    			.GET()
-    			.uri(uri)
-    			.setHeader("Data-Type", "json")
-    			.build();
+		HttpGet request = new HttpGet(url.toString());
+		request.addHeader("Content-Type", dataType);
 		
-		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		return response.body();
+		HttpResponse response = httpClient.execute(request);
+		
+		return EntityUtils.toString(response.getEntity());
 	}
 	
 	public static void downloadToFile(URL url, File file) throws IOException {
