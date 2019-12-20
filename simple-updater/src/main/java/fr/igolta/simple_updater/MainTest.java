@@ -11,7 +11,7 @@ public class MainTest {
 		File downloadFolder = new File(System.getProperty("user.home") + "/desktop/Test/");
 		
 		try {
-			System.out.println(SimpleUpdater.downloadWithReq(new URL("http://localhost/simple_updater/")));
+			new SimpleUpdater(URI.create("http://localhost/simple_updater/"), downloadFolder);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
