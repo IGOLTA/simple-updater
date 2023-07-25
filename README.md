@@ -1,6 +1,6 @@
 # Simple-updater
 
-Simple-updater is a java library for updating and downloading files the easiest to use.
+Simple-updater lightweight is a java library for updating and downloading files the easiest to use.
 
 ## Todo list
 
